@@ -74,10 +74,10 @@ const _d = (...chunks) => atob(chunks.join(''));
 
 const personalizeImg = { img : { eurecat: "https://lab.eurecatacademy.org/wp-content/uploads/2025/10/icon_chatbot-3.gif"  } }
 const Color = {
-    institucional : '#505393',
-    lightPurple : '#21B2A6',
+    institucional : '#00B2A6',
+    lightPurple : '#00B2A6',
     white : '#FFF',
-    lightGrey : '#f1f1f1',
+    lightGrey : '#F1F1F1',
 }
 
 const config = {
@@ -133,14 +133,24 @@ const addContentDialog = (dialog) => {
     marginBottom: '0.625rem',
     textAlign: 'left',
     border: `0.0625rem solid ${Color.institucional}`,
-    fontSize: '0.5rem',
+    fontSize: '1rem',
+    color: '#fff',
+    backgroundColor: Color.institucional,
     borderRadius: '0.625rem',
     outline: 'none',
     overflowY: 'hidden',
-    minHeight: '1.5rem',
+    minHeight: '2rem',
     maxHeight: '10rem',
     resize: 'none'
   });
+  const style = document.createElement('style');
+  style.textContent = `
+    #userTextSpace::placeholder {
+      color: rgba(255, 255, 255, 1);
+    }
+  `;
+  const parentDoc = window.parent?.document || document;
+  parentDoc.head.appendChild(style);
   dialogContent.appendChild(input);
 
   input.addEventListener('focus', () => {
@@ -148,9 +158,9 @@ const addContentDialog = (dialog) => {
   });
 
   const welcome = doc.createElement('div');
-  welcome.innerHTML = `<p style="font-size:0.625rem;">${translations[lang].personalWelcomeMessage ?? translations[lang].welcomeMessage}</p>`;
+  welcome.innerHTML = `<p style="font-size:0.75rem;">${translations[lang].personalWelcomeMessage ?? translations[lang].welcomeMessage}</p>`;
   Object.assign(welcome.style, {
-    fontSize: '0.625rem',
+    fontSize: '1rem',
     margin: '0',
     color: Color.institucional,
     textAlign: 'left',
@@ -179,7 +189,7 @@ const manageEntryUser = (input, messages, spinnerHost) => {
         color: Color.white,
         padding: '0.3125rem 1.25rem',
         borderRadius: '0.625rem',
-        fontSize: '0.625rem'
+        fontSize: '1rem'
       });
       messages.appendChild(userMessageElement);
 
@@ -191,8 +201,8 @@ const manageEntryUser = (input, messages, spinnerHost) => {
 
       const botMessageElement = (input.ownerDocument || document).createElement('div');
       botMessageElement.innerHTML = botMessage?.text
-        ? `<p style="font-size:0.625rem;">${botMessage.text}</p>`
-        : `<p style="font-size:0.625rem;">${translations[lang].botNoAnswer}</p>`;
+        ? `<p style="font-size:1rem;">${botMessage.text}</p>`
+        : `<p style="font-size:1rem;">${translations[lang].botNoAnswer}</p>`;
       Object.assign(botMessageElement.style, {
         margin: '0.625rem 0',
         color: Color.institucional,
@@ -315,19 +325,21 @@ const createMiniModal = (userMessage, botMessage, isPositive) => {
   textarea.placeholder = translations[lang].writeFeedback;
   Object.assign(textarea.style, {
     marginBottom: '0.625rem',
-    fontSize: '0.75rem',
+    fontSize: '1rem',
     width: '100%',
     outline: 'none',
     borderRadius: '0.4rem',
     border: `1px solid ${Color.institucional}`,
+    backgroundColor: Color.institucional,
     padding: '0.4rem'
   });
+
 
   const sendBtn = parentDoc.createElement('button');
   sendBtn.textContent = translations[lang].send;
   Object.assign(sendBtn.style, {
     marginRight: '0.5rem',
-    fontSize: '0.7rem',
+    fontSize: '1rem',
     color: Color.white,
     backgroundColor: Color.institucional,
     borderRadius: '0.625rem',
@@ -338,7 +350,7 @@ const createMiniModal = (userMessage, botMessage, isPositive) => {
 
   const cancelBtn = parentDoc.createElement('button');
   Object.assign(cancelBtn.style, {
-    fontSize: '0.7rem',
+    fontSize: '1rem',
     padding: '0.3125rem 0.625rem',
     backgroundColor: Color.white,
     border: `0.0625rem solid ${Color.institucional}`,
@@ -628,7 +640,7 @@ const createFeedbackButtons = (container, botMessage, userMessage) => {
     height: '0.3125rem',
     marginLeft: '0.3125rem',
     width: 'fit-content',
-    fontSize: '0.5rem',
+    fontSize: '1rem',
     color: '#AAA'
   });
   thxresponseDiv.textContent = translations[lang].helpUsImprove;
@@ -638,7 +650,7 @@ const createFeedbackButtons = (container, botMessage, userMessage) => {
   Object.assign(thumbsUp.style, {
     color: 'rgba(0, 0, 0, 0.3)',
     height: '0.3125rem',
-    fontSize: '0.625rem',
+    fontSize: '1rem',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
     padding: '0.5rem',
@@ -653,7 +665,7 @@ const createFeedbackButtons = (container, botMessage, userMessage) => {
   Object.assign(thumbsDown.style, {
     opacity: '0.3',
     height: '0.3125rem',
-    fontSize: '0.625rem',
+    fontSize: '1rem',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
     padding: '0.5rem',
@@ -672,7 +684,7 @@ const createFeedbackButtons = (container, botMessage, userMessage) => {
       thxresponseDiv.textContent = translations[lang].helpfull;
       feedbackText.style.display = 'flex';
       feedbackText.style.justifyContent = 'flex-start';
-      feedbackText.style.fontSize = '0.5rem';
+      feedbackText.style.fontSize = '1rem';
     }
   });
 
@@ -694,7 +706,7 @@ const createFeedbackButtons = (container, botMessage, userMessage) => {
       thumbsDown.style.color = Color.institucional;
       thxresponseDiv.style.color = '#ea4335';
       thxresponseDiv.textContent = translations[lang].dontHelpfull;
-      feedbackText.style.fontSize = '0.5rem';
+      feedbackText.style.fontSize = '1rem';
     }
   });
 
@@ -777,9 +789,9 @@ function createImageButton() {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '3.25rem',   // tamaño del botón
+    width: '3.25rem',
     height: '3.25rem',
-    background: '#fff', // fondo para que no “coma” texto
+    background: '#fff',
     border: '0',
     borderRadius: '50%',
     boxShadow: '0 6px 24px rgba(0,0,0,.12)',
@@ -797,14 +809,13 @@ function createImageButton() {
   }
   img.src = personalizeImg?.img?.eurecat || '';
   Object.assign(img.style, {
-    width: '2rem',      // 👈 imagen más pequeña
+    width: '2rem',
     height: '2rem',
     objectFit: 'contain',
     display: 'block',
     pointerEvents: 'none'
   });
 
-  // Reserva hueco para que el contenido no quede debajo del botón
   const doc = document;
   doc.body.style.paddingRight = '5rem';
   doc.body.style.paddingBottom = '5rem';
