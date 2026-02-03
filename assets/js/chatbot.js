@@ -4,7 +4,7 @@ const personalWelcomeMessage = null
 const translations = {
     en: {
         personalWelcomeMessage,
-        welcomeMessage: 'Hello! What can I help you?',
+        welcomeMessage: 'Welcome, type "hello" to start the conversation',
         botNoAnswer: 'No response received from the bot.',
         errorInteracting: 'Error interacting with Botpress:',
         errorComunication: 'An error occurred in the communication with the bot.',
@@ -26,7 +26,7 @@ const translations = {
     },
     ca: {
         personalWelcomeMessage,
-        welcomeMessage: '¡Hola! En què puc ajudar-te',
+        welcomeMessage: 'Benvingut/da, escriu hola per a començar la conversa',
         botNoAnswer: 'No es va rebre resposta del bot.',
         errorInteracting: 'Error interactuant amb Botpress:',
         errorComunication: 'Ha succeït un error en la comunicació amb el bot.',
@@ -48,7 +48,7 @@ const translations = {
     },
     es: {
         personalWelcomeMessage,
-        welcomeMessage: '¡Hola! ¿En qué puedo ayudarte?',
+        welcomeMessage: 'Bienvenido/da, escribe hola para empezar la conversación',
         botNoAnswer: 'No se recibió respuesta del bot.',
         errorInteracting: 'Error interactuando con Botpress:',
         errorComunication: 'Ha sucedido un error en la comunicación con el bot.',
@@ -70,23 +70,41 @@ const translations = {
 
     }
 };
-const _d = (...chunks) => atob(chunks.join(''));
+const _d = (...chunks) =>
+  new TextDecoder().decode(
+    Uint8Array.from(atob(chunks.join('')), c => c.charCodeAt(0))
+  );
+
+const _e = (text, size = 20) => {
+  const base64 = btoa(
+    String.fromCharCode(
+      ...new TextEncoder().encode(text)
+    )
+  );
+
+  const chunks = [];
+  for (let i = 0; i < base64.length; i += size) {
+    chunks.push(base64.slice(i, i + size));
+  }
+
+  return chunks;
+};
 
 const personalizeImg = { img : { eurecat: "https://lab.eurecatacademy.org/wp-content/uploads/2025/10/icon_chatbot-3.gif"  } }
 const Color = {
-    institucional : '#00B2A6',
-    lightPurple : '#00B2A6',
+    institucional : '#505393',
+    lightPurple : '#21B2A6',
     white : '#FFF',
-    lightGrey : '#F1F1F1',
+    lightGrey : '#f1f1f1',
 }
 
 const config = {
-  botpressUrl: _d('aHR0cHM6Ly9jaGF0','LmJvdHByZXNzLmNsb3Vk'),
-  botpressApiUrl: _d('aHR0cHM6Ly9hcGkuYm90','cHJlc3MuY2xvdWQvdjE='),
-  xWorkspaceId: _d('YWJmNjEyZDAtYWY4ZS00','M2UwLWIxYmItZjhkYjA5','MmUzNWIx'),
-  bearerToken: _d('YnBfcGF0X2pvM3ZwNkJN','ZUt5dUhRSHlKRUlKRmMx','elp4R0pTbUt3dHBkZQ=='),
   xBotId: _d('ZTYzMDIxYmUtM2Y2Ny00','MTExLWFmMDEtMzljNGNj','YWMzMmFi'),
-  botpressWebhookId: _d('MTYxYzU4ZGItZjk1My00','ZDU5LWFiNmItN2Y5N2Iy','YjdjNjkz'),
+  bpUrl: _d('aHR0cHM6Ly9jaGF0','LmJvdHByZXNzLmNsb3Vk'),
+  bpApiUrl: _d('aHR0cHM6Ly9hcGkuYm90','cHJlc3MuY2xvdWQvdjE='),
+  xWorkspaceId: _d('YWJmNjEyZDAtYWY4ZS00','M2UwLWIxYmItZjhkYjA5','MmUzNWIx'),
+  bTok: _d('YnBfcGF0X2pvM3ZwNkJN','ZUt5dUhRSHlKRUlKRmMx','elp4R0pTbUt3dHBkZQ=='),
+  bpWebhkId: _d('MTYxYzU4ZGItZjk1My00','ZDU5LWFiNmItN2Y5N2Iy','YjdjNjkz'),
   table: _d('ZmVlZEJhY2tUYWJsZQ==')
 };
 
@@ -108,7 +126,8 @@ const addContentDialog = (dialog) => {
   const messages = doc.createElement('div');
   messages.className = 'messages';
   Object.assign(messages.style, {
-    height: '12.5rem',
+    height: '70%',
+    padding: '0.75rem',
     overflowY: 'auto',
     width: '100%'
   });
@@ -139,7 +158,7 @@ const addContentDialog = (dialog) => {
     borderRadius: '0.625rem',
     outline: 'none',
     overflowY: 'hidden',
-    minHeight: '2rem',
+    minHeight: '1rem',
     maxHeight: '10rem',
     resize: 'none'
   });
@@ -158,9 +177,9 @@ const addContentDialog = (dialog) => {
   });
 
   const welcome = doc.createElement('div');
-  welcome.innerHTML = `<p style="font-size:0.75rem;">${translations[lang].personalWelcomeMessage ?? translations[lang].welcomeMessage}</p>`;
+  welcome.innerHTML = `<p style="font-size:1rem;">${translations[lang].personalWelcomeMessage ?? translations[lang].welcomeMessage}</p>`;
   Object.assign(welcome.style, {
-    fontSize: '1rem',
+    fontSize: '1.5rem',
     margin: '0',
     color: Color.institucional,
     textAlign: 'left',
@@ -174,52 +193,83 @@ const addContentDialog = (dialog) => {
 };
 
 const manageEntryUser = (input, messages, spinnerHost) => {
+
+  const handleUserMessage = async (rawText) => {
+    const userMessage = sanitizeInput(rawText);
+    const userMessageShow = rawText;
+
+    const userMessageElement = (input.ownerDocument || document).createElement('div');
+    userMessageElement.innerText = userMessageShow;
+    Object.assign(userMessageElement.style, {
+      margin: '0.625rem 0',
+      textAlign: 'right',
+      backgroundColor: Color.lightPurple,
+      color: Color.white,
+      padding: '0.3125rem 1.25rem',
+      borderRadius: '0.625rem',
+      fontSize: '1rem'
+    });
+    messages.appendChild(userMessageElement);
+
+    setTimeout(() => {
+      messages.scrollTop = messages.scrollHeight;
+    }, 0);
+
+    // Enviar al bot
+    const botMessage = await sendMessageToBotPress(userMessage, spinnerHost);
+
+    // Mostrar respuesta del bot
+    const botMessageElement = (input.ownerDocument || document).createElement('div');
+    const formatNewLines = (s) => (s ?? '').replace(/\n/g, '<br>');
+    const cleanText = botMessage?.text
+      ? removeOptionsFromText(botMessage.text, botMessage.options)
+      : translations[lang].botNoAnswer;
+
+    botMessageElement.innerHTML = `<p style="font-size:1rem;">${formatNewLines(cleanText)}</p>`;
+
+    botMessageElement.innerHTML += generateButtonsFromOptions(botMessage);
+
+    Object.assign(botMessageElement.style, {
+      margin: '0.625rem 0',
+      color: Color.institucional,
+      textAlign: 'left',
+      backgroundColor: Color.lightGrey,
+      padding: '0.625rem 1.25rem',
+      borderRadius: '0.625rem'
+    });
+
+    messages.appendChild(botMessageElement);
+    createFeedbackButtons(botMessageElement, botMessage, userMessage);
+
+    setTimeout(() => {
+      messages.scrollTop = messages.scrollHeight;
+    }, 0);
+  };
+
   input.addEventListener('keypress', async (e) => {
     if (e.key === 'Enter' && input.value.trim() !== '') {
-      const userMessage = sanitizeInput(input.value);
-      const userMessageShow = input.value;
+      const text = input.value.trim();
       input.value = '';
-
-      const userMessageElement = (input.ownerDocument || document).createElement('div');
-      userMessageElement.innerText = userMessageShow;
-      Object.assign(userMessageElement.style, {
-        margin: '0.625rem 0',
-        textAlign: 'right',
-        backgroundColor: Color.lightPurple,
-        color: Color.white,
-        padding: '0.3125rem 1.25rem',
-        borderRadius: '0.625rem',
-        fontSize: '1rem'
-      });
-      messages.appendChild(userMessageElement);
-
-      setTimeout(() => {
-        messages.scrollTop = messages.scrollHeight;
-      }, 0);
-
-      const botMessage = await sendMessageToBotPress(userMessage, spinnerHost);
-
-      const botMessageElement = (input.ownerDocument || document).createElement('div');
-      botMessageElement.innerHTML = botMessage?.text
-        ? `<p style="font-size:1rem;">${botMessage.text}</p>`
-        : `<p style="font-size:1rem;">${translations[lang].botNoAnswer}</p>`;
-      Object.assign(botMessageElement.style, {
-        margin: '0.625rem 0',
-        color: Color.institucional,
-        textAlign: 'left',
-        backgroundColor: Color.lightGrey,
-        padding: '0.625rem 1.25rem',
-        borderRadius: '0.625rem'
-      });
-      messages.appendChild(botMessageElement);
-      createFeedbackButtons(botMessageElement, botMessage, userMessage);
-
-      setTimeout(() => {
-        messages.scrollTop = messages.scrollHeight;
-      }, 0);
+      await handleUserMessage(text);
     }
   });
+
+  if (!messages.dataset.buttonsListenerAdded) {
+    messages.dataset.buttonsListenerAdded = 'true';
+
+    messages.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button.btn_bot');
+      if (!btn) return;
+
+      // toma el value del botón
+      const valueToSend = btn.getAttribute('data-value') || btn.value;
+      if (!valueToSend) return;
+
+      await handleUserMessage(valueToSend);
+    });
+  }
 };
+
 
 const createDialog = () => {
   const parentDoc = window.parent?.document || document;
@@ -339,7 +389,7 @@ const createMiniModal = (userMessage, botMessage, isPositive) => {
   sendBtn.textContent = translations[lang].send;
   Object.assign(sendBtn.style, {
     marginRight: '0.5rem',
-    fontSize: '1rem',
+    fontSize: '0.75rem',
     color: Color.white,
     backgroundColor: Color.institucional,
     borderRadius: '0.625rem',
@@ -350,7 +400,7 @@ const createMiniModal = (userMessage, botMessage, isPositive) => {
 
   const cancelBtn = parentDoc.createElement('button');
   Object.assign(cancelBtn.style, {
-    fontSize: '1rem',
+    fontSize: '0.75rem',
     padding: '0.3125rem 0.625rem',
     backgroundColor: Color.white,
     border: `0.0625rem solid ${Color.institucional}`,
@@ -367,7 +417,6 @@ const createMiniModal = (userMessage, botMessage, isPositive) => {
 
   sendBtn.onclick = () => {
     const feedBack = sanitizeInput(textarea.value);
-    console.log('Feedback enviado:', feedBack);
     sendFeedback(answer, conversationId, messageId, userId, isPositive, question, feedBack);
     miniModal.remove();
 
@@ -386,18 +435,17 @@ const createMiniModal = (userMessage, botMessage, isPositive) => {
   textarea.focus();
 };
 
-
 const sendFeedback = async (answer, conversationId, messageId, userId, isPositive, question, feedBack = 'null') => {
   const headers = {
     'x-bot-id': config.xBotId,
     'x-workspace-id': config.xWorkspaceId,
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${config.bearerToken}`
+    'Authorization': `Bearer ${config.bTok}`
   };
   const rowData = { conversationId, messageId, userId, answer, isPositive, feedBack, question };
 
   try {
-    const findUrl = `${config.botpressApiUrl}/tables/${config.table}/rows/find`;
+    const findUrl = `${config.bpApiUrl}/tables/${config.table}/rows/find`;
     const findResponse = await fetch(findUrl, {
       method: 'POST',
       headers,
@@ -418,7 +466,7 @@ const sendFeedback = async (answer, conversationId, messageId, userId, isPositiv
     const existingRow = data.rows?.[0];
     console.log('Row find it!', existingRow);
 
-    const actionUrl = `${config.botpressApiUrl}/tables/${config.table}/rows`;
+    const actionUrl = `${config.bpApiUrl}/tables/${config.table}/rows`;
     const method = existingRow ? 'PUT' : 'POST';
     const body = existingRow
       ? JSON.stringify({ rows: [{ id: existingRow.id, ...rowData }] })
@@ -438,6 +486,17 @@ const sendFeedback = async (answer, conversationId, messageId, userId, isPositiv
 
 const sendMessageToBotPress = async (message, spinnerHost) => {
   let spinner = null;
+
+  const bpword = {
+  key: _e("botpress_user_key", 20).join(''),
+  user: _e("botpress_user_id", 20).join(''),
+  conversation: _e("botpress_conversation_id", 20).join(''),
+
+  convs: _d("Y29udmVyc2F0", "aW9ucw=="),
+  messs: _d("bWVzc2Fn", "ZXM="),
+  us: _d("dXNl", "cnM="),
+};
+
   try {
     const host =
       spinnerHost
@@ -446,12 +505,12 @@ const sendMessageToBotPress = async (message, spinnerHost) => {
 
     spinner = createSpinner(host);
 
-    let userKey = localStorage.getItem('botpress_user_key');
-    let conversationId = localStorage.getItem('botpress_conversation_id');
-    let userId = localStorage.getItem('botpress_user_id');
+    let userKey = (v => v ? _d(v) : null)(localStorage.getItem(bpword.key));
+    let userId = (v => v ? _d(v) : null)(localStorage.getItem(bpword.user));
+    let conversationId = (v => v ? _d(v) : null)(localStorage.getItem(bpword.conversation));
 
     if (!userKey) {
-      const response = await fetch(`${config.botpressUrl}/${config.botpressWebhookId}/users`, {
+      const response = await fetch(`${config.bpUrl}/${config.bpWebhkId}/${bpword.us}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({})
@@ -459,23 +518,23 @@ const sendMessageToBotPress = async (message, spinnerHost) => {
       const data = await response.json();
       userKey = data.key;
       userId = data.user.id;
-      localStorage.setItem('botpress_user_key', userKey);
-      localStorage.setItem('botpress_user_id', userId);
+      localStorage.setItem(bpword.key, _e(userKey, 20).join(''));
+      localStorage.setItem(bpword.user, _e(userId, 20).join(''));
     }
 
     if (!conversationId) {
-      const response = await fetch(`${config.botpressUrl}/${config.botpressWebhookId}/conversations`, {
+      const response = await fetch(`${config.bpUrl}/${config.bpWebhkId}/${bpword.convs}`, {
         method: 'POST',
         headers: { 'x-user-key': userKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({})
       });
       const data = await response.json();
       conversationId = data.conversation.id;
-      localStorage.setItem('botpress_conversation_id', conversationId);
+      localStorage.setItem(bpword.conversation, _e(conversationId, 20).join(''));
     }
 
     const sentMessageTimestamp = new Date().toISOString();
-    await fetch(`${config.botpressUrl}/${config.botpressWebhookId}/messages`, {
+    await fetch(`${config.bpUrl}/${config.bpWebhkId}/${bpword.messs}`, {
       method: 'POST',
       headers: { 'x-user-key': userKey, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -487,18 +546,23 @@ const sendMessageToBotPress = async (message, spinnerHost) => {
     const getBotResponse = async () => {
       for (let retries = 60; retries > 0; retries--) {
         const response = await fetch(
-          `${config.botpressUrl}/${config.botpressWebhookId}/conversations/${conversationId}/messages`,
+          `${config.bpUrl}/${config.bpWebhkId}/${bpword.convs}/${conversationId}/${bpword.messs}`,
           {
             method: 'GET',
             headers: { 'x-user-key': userKey, accept: 'application/json' }
           }
         );
         const data = await response.json();
+
         const botMessages = data.messages.filter(
           (msg) => msg.createdAt > sentMessageTimestamp && msg.userId !== userId
         );
         if (botMessages.length) {
           const text = botMessages[botMessages.length - 1].payload.text;
+          const options = Array.isArray(botMessages[botMessages.length - 1]?.payload?.options)
+                  ? botMessages[botMessages.length - 1].payload.options
+                  : undefined;
+
           const convertToLinks = (txt) => {
             const regex = /\[(.*?)\]\((https?:\/\/[^\)]+)\)/g;
             return txt.replace(regex, (match, textPart, url) => {
@@ -506,6 +570,7 @@ const sendMessageToBotPress = async (message, spinnerHost) => {
             });
           };
           return {
+            options,
             text: convertToLinks(text),
             messageId: botMessages[botMessages.length - 1].id,
             conversationId: botMessages[botMessages.length - 1].conversationId,
@@ -640,7 +705,7 @@ const createFeedbackButtons = (container, botMessage, userMessage) => {
     height: '0.3125rem',
     marginLeft: '0.3125rem',
     width: 'fit-content',
-    fontSize: '1rem',
+    fontSize: '0.75rem',
     color: '#AAA'
   });
   thxresponseDiv.textContent = translations[lang].helpUsImprove;
@@ -650,7 +715,7 @@ const createFeedbackButtons = (container, botMessage, userMessage) => {
   Object.assign(thumbsUp.style, {
     color: 'rgba(0, 0, 0, 0.3)',
     height: '0.3125rem',
-    fontSize: '1rem',
+    fontSize: '0.75rem',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
     padding: '0.5rem',
@@ -665,7 +730,7 @@ const createFeedbackButtons = (container, botMessage, userMessage) => {
   Object.assign(thumbsDown.style, {
     opacity: '0.3',
     height: '0.3125rem',
-    fontSize: '1rem',
+    fontSize: '0.75rem',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
     padding: '0.5rem',
@@ -684,7 +749,7 @@ const createFeedbackButtons = (container, botMessage, userMessage) => {
       thxresponseDiv.textContent = translations[lang].helpfull;
       feedbackText.style.display = 'flex';
       feedbackText.style.justifyContent = 'flex-start';
-      feedbackText.style.fontSize = '1rem';
+      feedbackText.style.fontSize = '0.75rem';
     }
   });
 
@@ -706,7 +771,7 @@ const createFeedbackButtons = (container, botMessage, userMessage) => {
       thumbsDown.style.color = Color.institucional;
       thxresponseDiv.style.color = '#ea4335';
       thxresponseDiv.textContent = translations[lang].dontHelpfull;
-      feedbackText.style.fontSize = '1rem';
+      feedbackText.style.fontSize = '0.75rem';
     }
   });
 
@@ -789,8 +854,8 @@ function createImageButton() {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '3.25rem',
-    height: '3.25rem',
+    width: '4.5rem',
+    height: '4.5rem',
     background: '#fff',
     border: '0',
     borderRadius: '50%',
@@ -809,8 +874,8 @@ function createImageButton() {
   }
   img.src = personalizeImg?.img?.eurecat || '';
   Object.assign(img.style, {
-    width: '2rem',
-    height: '2rem',
+    width: '3rem',
+    height: '3rem',
     objectFit: 'contain',
     display: 'block',
     pointerEvents: 'none'
@@ -823,12 +888,79 @@ function createImageButton() {
   return btn;
 }
 
+function generateButtonsFromOptions(dataObject) {
+  if (!dataObject?.options?.length) return '';
+
+  const buttonsContainer = document.createElement('div');
+  buttonsContainer.id = 'buttonsContainer';
+
+  Object.assign(buttonsContainer.style, {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    gap: '0.5rem'
+  });
+
+  for (const option of dataObject.options) {
+    if (!option?.label || !option?.value) continue;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn_bot';
+    btn.value = option.value;
+    btn.textContent = option.label;
+    btn.setAttribute('data-value', option.value);
+
+    Object.assign(btn.style, {
+      backgroundColor: Color.institucional,
+      color: 'white',
+      borderRadius: '0.3125rem',
+      margin: '0.3125rem 0',
+      padding: '0.5rem',
+      cursor: 'pointer'
+    });
+
+    buttonsContainer.appendChild(btn);
+  }
+
+  return buttonsContainer.outerHTML;
+}
+
+function removeOptionsFromText(text = '', options = []) {
+  if (!text || !Array.isArray(options) || options.length === 0) {
+    return text;
+  }
+
+  let cleanedText = text;
+
+  for (const opt of options) {
+    if (!opt?.label) continue;
+
+    // escapamos caracteres regex del label
+    const escapedLabel = opt.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // elimina:
+    // - el label solo
+    // - con guiones
+    // - con saltos de línea alrededor
+    const regex = new RegExp(
+      `(^|\\n|\\r|\\s|-|•|–)*${escapedLabel}(\\n|\\r|\\s)*`,
+      'gi'
+    );
+
+    cleanedText = cleanedText.replace(regex, '');
+  }
+
+  // limpieza final de espacios y líneas vacías
+  return cleanedText
+    .replace(/\n{2,}/g, '\n')
+    .replace(/^\s+|\s+$/g, '');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const imagenBoton = createImageButton();
   const [dialog, curtainOverlayDialog, setOpen] = createDialog();
   handleButtonClick(imagenBoton, dialog, curtainOverlayDialog, setOpen);
   addContentDialog(dialog);
 });
-
-
-
