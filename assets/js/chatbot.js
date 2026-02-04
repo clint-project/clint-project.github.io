@@ -220,12 +220,16 @@ const manageEntryUser = (input, messages, spinnerHost) => {
 
     // Mostrar respuesta del bot
     const botMessageElement = (input.ownerDocument || document).createElement('div');
-    const formatNewLines = (s) => (s ?? '').replace(/\n/g, '<br>');
-    const cleanText = botMessage?.text
+    const formatText = (s) =>
+      (s ?? '')
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+      const cleanText = botMessage?.text
       ? removeOptionsFromText(botMessage.text, botMessage.options)
       : translations[lang].botNoAnswer;
 
-    botMessageElement.innerHTML = `<p style="font-size:1rem;">${formatNewLines(cleanText)}</p>`;
+    botMessageElement.innerHTML = `<p style="font-size:1rem;">${formatText(cleanText)}</p>`;
 
     botMessageElement.innerHTML += generateButtonsFromOptions(botMessage);
 
@@ -583,6 +587,7 @@ const sendMessageToBotPress = async (message, spinnerHost) => {
     };
 
     const dataRes = await getBotResponse();
+
     if (spinner) spinner.remove();
     return dataRes;
   } catch (error) {
@@ -898,7 +903,7 @@ function generateButtonsFromOptions(dataObject) {
     display: 'flex',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
-    alignItems: 'center',
+    alignItems: 'stretch', // 👈 importante
     gap: '0.5rem'
   });
 
@@ -918,8 +923,18 @@ function generateButtonsFromOptions(dataObject) {
       borderRadius: '0.3125rem',
       margin: '0.3125rem 0',
       padding: '0.5rem',
-      cursor: 'pointer'
+      cursor: 'pointer',
+
+      /* 🔥 FIX */
+      whiteSpace: 'normal',
+      wordBreak: 'break-word',
+      overflowWrap: 'break-word',
+      height: 'auto',
+      lineHeight: '1.2',
+      boxSizing: 'border-box',
+      maxWidth: '100%'
     });
+
 
     buttonsContainer.appendChild(btn);
   }
@@ -937,13 +952,8 @@ function removeOptionsFromText(text = '', options = []) {
   for (const opt of options) {
     if (!opt?.label) continue;
 
-    // escapamos caracteres regex del label
     const escapedLabel = opt.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    // elimina:
-    // - el label solo
-    // - con guiones
-    // - con saltos de línea alrededor
     const regex = new RegExp(
       `(^|\\n|\\r|\\s|-|•|–)*${escapedLabel}(\\n|\\r|\\s)*`,
       'gi'
@@ -952,7 +962,6 @@ function removeOptionsFromText(text = '', options = []) {
     cleanedText = cleanedText.replace(regex, '');
   }
 
-  // limpieza final de espacios y líneas vacías
   return cleanedText
     .replace(/\n{2,}/g, '\n')
     .replace(/^\s+|\s+$/g, '');
