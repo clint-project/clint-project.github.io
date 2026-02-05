@@ -229,7 +229,12 @@ const manageEntryUser = (input, messages, spinnerHost) => {
       ? removeOptionsFromText(botMessage.text, botMessage.options)
       : translations[lang].botNoAnswer;
 
-    botMessageElement.innerHTML = `<p style="font-size:1rem;">${formatText(cleanText)}</p>`;
+      botMessageElement.innerHTML = `
+      <p style="font-size:1rem; color:#505393 !important;">
+        ${formatText(cleanText)}
+      </p>
+    `;
+
 
     botMessageElement.innerHTML += generateButtonsFromOptions(botMessage);
 
@@ -859,8 +864,8 @@ function createImageButton() {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '4.5rem',
-    height: '4.5rem',
+    width: '5rem',
+    height: '5rem',
     background: '#fff',
     border: '0',
     borderRadius: '50%',
@@ -879,8 +884,8 @@ function createImageButton() {
   }
   img.src = personalizeImg?.img?.eurecat || '';
   Object.assign(img.style, {
-    width: '3rem',
-    height: '3rem',
+    width: '5rem',
+    height: '5rem',
     objectFit: 'contain',
     display: 'block',
     pointerEvents: 'none'
@@ -903,7 +908,7 @@ function generateButtonsFromOptions(dataObject) {
     display: 'flex',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
-    alignItems: 'stretch', // 👈 importante
+    alignItems: 'stretch',
     gap: '0.5rem'
   });
 
